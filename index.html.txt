@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tapşırıq Püşkatması</title>
+</head>
+
+<body>
+
+<h1>Tapşırıq Al</h1>
+
+<input type="text" id="name" placeholder="Adını yaz">
+<button onclick="getTask()">Tapşırıq al</button>
+
+<p id="result"></p>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    collection,
+    getDocs,
+    deleteDoc
+} from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+// 🔥 Sənin Firebase config
+const firebaseConfig = {
+    apiKey: "AIzaSyBB0kPVWfyba516lYtVSoxI1LMxYheemok",
+    authDomain: "project-ff528.firebaseapp.com",
+    projectId: "project-ff528",
+    storageBucket: "project-ff528.firebasestorage.app",
+    messagingSenderId: "496907634916",
+    appId: "1:496907634916:web:20c0e7bd5ba3aeb4b544f1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 🚀 ƏSAS FUNKSİYA
+window.getTask = async function () {
+    const name = document.getElementById("name").value.trim();
+
+    if (!name) {
+        alert("Adını yaz!");
+        return;
+    }
+
+    const userRef = doc(db, "assignments", name);
+    const userSnap = await getDoc(userRef);
+
+    // əgər artıq tapşırıq alıbsa
+    if (userSnap.exists()) {
+        document.getElementById("result").innerText =
+            "Sənin tapşırığın: " + userSnap.data().task;
+        return;
+    }
+
+    // tasks-ları götür
+    const tasksSnapshot = await getDocs(collection(db, "tasks"));
+
+    if (tasksSnapshot.empty) {
+        document.getElementById("result").innerText =
+            "Tapşırıq qalmayıb.";
+        return;
+    }
+
+    const tasks = [];
+
+    tasksSnapshot.forEach((d) => {
+        tasks.push({
+            id: d.id,
+            task: d.data().task
+        });
+    });
+
+    // random seç
+    const randomTask = tasks[Math.floor(Math.random() * tasks.length)];
+
+    // user-ə yaz
+    await setDoc(userRef, {
+        task: randomTask.task
+    });
+
+    // tasks-dan sil
+    await deleteDoc(doc(db, "tasks", randomTask.id));
+
+    document.getElementById("result").innerText =
+        "Sənin tapşırığın: " + randomTask.task;
+};
+</script>
+
+</body>
+</html>
